@@ -1,6 +1,4 @@
-import random as r
-import math as m
-import sieve_of_eratosthenes as eratos
+# This code contains the functions we need from the section 2.3 of the book
 
 def jacobi_symbol(a: int, m: int) -> int:
     """
