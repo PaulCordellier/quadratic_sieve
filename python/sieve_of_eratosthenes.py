@@ -1,4 +1,4 @@
-def get_primes_up_to(n : int):
+def get_primes_up_to(n : int) -> list[int]:
     primes = []
 
     if n < 2:

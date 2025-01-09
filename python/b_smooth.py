@@ -1,7 +1,11 @@
 import math
 import sieve_of_eratosthenes as eratos
 
-def recognize_smooth_numbers_with_multiplication(b, n):
+def get_b_smooth_numbers_with_multiplication(b: int, n: int) -> list[int]:
+    """
+    Returns every b-smooth numbers in the range [2, n]
+    """
+
     if b < 2:
         raise ValueError("The condition 2 ≤ B should be true.")
 
@@ -14,7 +18,7 @@ def recognize_smooth_numbers_with_multiplication(b, n):
     # B-Smooth values of the numbers in the number range
     b_smooth_value_of_numbers = [1] * len(number_range)
 
-    # Get all the prime numbers on [2, B] (Assuming the function exists)
+    # Get all the prime numbers on [2, B]
     primes_numbers = eratos.get_primes_up_to(b)
 
     # For each prime number
@@ -29,13 +33,20 @@ def recognize_smooth_numbers_with_multiplication(b, n):
 
             prime_number_to_power *= prime_number
 
-    # If a number in number_range is b-smooth, the corresponding value in this array is True; if not, False.
-    number_is_b_smooth = [b_smooth_value_of_numbers[i] == number_range[i] for i in range(len(number_range))]
+    b_smooth_numbers = []
+    
+    for i in range(len(number_range)):
+        if b_smooth_value_of_numbers[i] == number_range[i]:
+            b_smooth_numbers.append(number_range[i])
 
-    return b, n, number_range, number_is_b_smooth
+    return b_smooth_numbers
 
 
-def recognize_smooth_numbers_with_logarithm(b, n):
+def get_b_smooth_numbers_with_logarithm(b: int, n: int) -> list[int]:
+    """
+    Returns approximately every b-smooth numbers in the range [2, n]
+    """
+
     if b < 2:
         raise ValueError("The condition 2 ≤ B should be true.")
 
@@ -48,7 +59,7 @@ def recognize_smooth_numbers_with_logarithm(b, n):
     # Logarithmic sum values
     addition_of_logarithm = [0] * len(number_range)
 
-    # Get all the prime numbers on [2, B] (Assuming the function exists)
+    # Get all the prime numbers on [2, B]
     primes_numbers = eratos.get_primes_up_to(b)
 
     # The logarithm of the primes numbers
@@ -66,12 +77,12 @@ def recognize_smooth_numbers_with_logarithm(b, n):
 
             prime_number_to_power *= primes_numbers[i]
 
-    # If a number in number_range is b-smooth, the corresponding value in this array is True; if not, False.
     error_margin = math.log2(b) / 2
 
-    number_is_b_smooth = [
-        addition_of_logarithm[i] >= math.log2(number_range[i]) - error_margin
-        for i in range(len(number_range))
-    ]
+    b_smooth_numbers = []
+    
+    for i in range(len(number_range)):
+        if addition_of_logarithm[i] >= math.log2(number_range[i]) - error_margin:
+            b_smooth_numbers.append(number_range[i])
 
-    return b, n, number_range, number_is_b_smooth
+    return b_smooth_numbers
