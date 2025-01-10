@@ -39,14 +39,16 @@ def quadratic_sieve(n: int):
     S = []
 
     number_range_size = 500
-    error_margin = math.ceil(math.log2(B) / 2)
+    error_margin = math.log2(B)
 
-    while len(S) <= K + 1:
+    while len(S) < K + 1:
+
         number_range = list(range(start_of_next_number_range, start_of_next_number_range + number_range_size))
         start_of_next_number_range += number_range_size
 
         addition_of_logarithms = [0] * number_range_size
-        # Sieving un the number range here
+
+        # Sieving the number range here:
 
         for i in range(len(primes)):
 
@@ -54,21 +56,39 @@ def quadratic_sieve(n: int):
             
                 addition_of_logarithms[j] += prime_logarithms[i] 
 
-
         for i in range(len(number_range)):
             if addition_of_logarithms[i] >= math.log2(number_range[i]) - error_margin:
 
                 S.append((number_range[i], number_range[i] ** 2 - n))
 
-    print(S)
+    S = S[:K+1]
 
+    print(S)
+    
+    
     ## 3. Linear algebra:
 
-    # ...
+    matrix = [[0 for _ in range(K)] for _ in range(K + 1)]
+
+    for i in range(len(S)):
+
+        # Establishing prime factorization of x2_n:
+        x2_n = S[i][1]
+
+        for j in range(len(primes)):
+
+            while x2_n / primes[j] % 1 == 0:
+
+                x2_n = x2_n // primes[j]
+
+                matrix[i][j] = 1 if matrix[i][j] == 0 else 0
+
+    print(matrix)
+
 
     ## 4. Factorization:
 
     # ...
 
 
-quadratic_sieve(19484388)
+quadratic_sieve(1586334169280)

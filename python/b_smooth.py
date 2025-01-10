@@ -77,7 +77,7 @@ def get_b_smooth_numbers_with_logarithm(b: int, n: int) -> list[int]:
 
             prime_number_to_power *= primes_numbers[i]
 
-    error_margin = math.log2(b) / 2
+    error_margin = math.log2(b)
 
     b_smooth_numbers = []
     
