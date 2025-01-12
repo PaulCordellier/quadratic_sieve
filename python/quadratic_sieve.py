@@ -2,11 +2,54 @@ import math
 import sieve_of_eratosthenes as eratos
 import section_2_3
 
-# Functions:
-
+# Function for step 1:
 def L(n: int):
     return math.e ** math.sqrt(math.log(n) * math.log(math.log(n)))
 
+
+# Function for step 3:
+def find_zero_vector(matrix: list[list[int]], vector_combination: list[bool], vector_addition: list[int] | None = None, start_check_position = 0) -> tuple[list[bool], list[int]] | None:
+
+    for i in range(start_check_position, len(matrix)):
+        
+        if vector_combination[i] == True:
+            continue
+
+        check_this_vector = False
+
+        if vector_addition == None:
+            check_this_vector = True
+        else:
+            for j in range(len(matrix[i])):
+                if matrix[i][j] == vector_addition[j] == 1:
+                    check_this_vector = True
+                    break
+
+        if not check_this_vector:
+            continue
+
+        new_vector_combination = [vector_combination[j] if j != i else True for j in range(len(vector_combination))]
+
+        if vector_addition == None:
+            new_vector_addition = matrix[i]
+        else:
+            new_vector_addition = [0 if vector_addition[j] == matrix[i][j] else 1 for j in range(len(vector_addition))]
+
+        if all(value == 0 for value in new_vector_addition):
+            return (new_vector_combination, new_vector_addition)
+
+        return_values = find_zero_vector(matrix, new_vector_combination, new_vector_addition, start_check_position + 1)
+
+        if return_values == None:
+            continue
+
+        if all(value == 0 for value in return_values[1]):
+            return return_values
+            
+    return None
+
+
+# Basic implementation of the quadratic sieve (page 276):
 def quadratic_sieve(n: int):
     """
     Implements the quadratic sieve. It's basic implementation is
@@ -33,7 +76,7 @@ def quadratic_sieve(n: int):
 
     ## 2. Sieving:
 
-    S = []
+    S: list[tuple[int, int]] = []
     matrix = []     # this is the matrix used in step 3
 
     # As written in remark (2) of page 277, we won't sieve for small primes.
@@ -98,7 +141,7 @@ def quadratic_sieve(n: int):
 
                 # So here the number x is probably B-smooth. Because the sieving with logarithm
                 # isn't exact, we check here that the number is really B-smooth and make the
-                # vector v(x2 − n) of step 3 at the same time.
+                # vector v(x² − n) of step 3 at the same time.
 
                 # Establishing prime factorization of x2_n:
 
@@ -117,8 +160,8 @@ def quadratic_sieve(n: int):
                     S.append(pair_to_add_in_S)
                     matrix.append(vector)
 
-    S = S[:K+1]
-    matrix = matrix[:K+1]
+    S = S[:K + 1]
+    matrix = matrix[:K + 1]
 
     print(S)
     
@@ -128,6 +171,13 @@ def quadratic_sieve(n: int):
     # Establishing the matrix has been done in step 2.
 
     print(matrix)
+
+    vector_combination = find_zero_vector(matrix, [False] * (K + 1))[0]
+
+    for i in range(len(matrix)):
+        if not vector_combination[i]:
+            continue
+        print(matrix[i])
 
 
     ## 4. Factorization:
