@@ -41,6 +41,9 @@ def algo_2_3_8(p: int, a: int) -> int:
     this algorithm returns a solution x to x^2 ≡ a (mod p).
     """
 
+    if jacobi_symbol(a, p) != 1:
+        raise ValueError(f"The jacobi symbol is equal to {jacobi_symbol(a, p)}, a = {a}, p = {p}")
+
     match p % 8:
 
         case 3 | 7:
