@@ -1,6 +1,7 @@
 import math
 import sieve_of_eratosthenes as eratos
 import section_2_3
+import get_zero_vector_combination as get_zero_vector
 
 
 # Basic implementation of the quadratic sieve (page 276):
@@ -38,7 +39,7 @@ def quadratic_sieve(n: int):
 
     prime_logarithms_for_sieving = [math.ceil(math.log2(x)) for x in primes_for_sieving]
 
-    start_of_next_number_range = math.ceil(math.sqrt(n))
+    start_of_number_range = math.ceil(math.sqrt(n))
 
     number_range_size = 500
     error_margin = math.ceil(math.log2(B))
@@ -47,10 +48,14 @@ def quadratic_sieve(n: int):
 
     right_vector_matrix_is_found = False
 
+    nb_of_tested_numbers = 0
+    nb_of_sieved_numbers = 0
+    nb_of_b_smooth_found = 0
+    
+
     while not right_vector_matrix_is_found:
 
-        number_range = list(range(start_of_next_number_range, start_of_next_number_range + number_range_size))
-        start_of_next_number_range += number_range_size
+        number_range = list(range(start_of_number_range, start_of_number_range + number_range_size))
 
         number_of_trails += 1
 
@@ -61,8 +66,6 @@ def quadratic_sieve(n: int):
         for i in range(len(primes_for_sieving)):
 
             prime = primes_for_sieving[i]
-
-            start_of_number_range = number_range[0]
             root_a = roots_a_for_sieving[i]
 
             # first_occurence here represents the position of the first number of number_range for which
@@ -91,9 +94,13 @@ def quadratic_sieve(n: int):
                 
         for i in range(number_range_size):
 
+            nb_of_tested_numbers += 1
+
             # if the sieve doesn't determine the number as b-smooth (this is approximate)
             if not sum_of_logarithms[i] >= math.log2(number_range[i]) - error_margin:
                 continue
+
+            nb_of_sieved_numbers += 1
 
             x = number_range[i]
             x2_n = x ** 2 - n     # x2_n = x² − n
@@ -108,6 +115,8 @@ def quadratic_sieve(n: int):
             if returned_vectors == None:    # In that case, the number isn't b-smooth
                 continue
 
+            nb_of_b_smooth_found += 1
+
             (vector, vector_mod_2) = returned_vectors
 
             # Here, the number is b-smooth for sure!
@@ -118,7 +127,7 @@ def quadratic_sieve(n: int):
             if len(S) < K + 10:
                 continue
 
-            vector_indexes = get_combination_for_zero_vector(vector_matrix_mod_2, K)
+            vector_indexes = get_zero_vector.get_zero_vector_combination(vector_matrix_mod_2, K)
 
             if vector_indexes == None:
                 continue
@@ -134,9 +143,16 @@ def quadratic_sieve(n: int):
             break
 
         if number_of_trails > 1000:
-            # print("too much trails !")
+            print("too much trails !")
             return 0
     
+        start_of_number_range += number_range_size
+
+
+    print("nb_of_tested_numbers : " + str(nb_of_tested_numbers))
+    print("nb_of_sieved_numbers : " + str(nb_of_sieved_numbers))
+    print("nb_of_b_smooth_found : " + str(nb_of_b_smooth_found))
+
 
     ## 3. Linear algebra:
 
@@ -178,14 +194,14 @@ def prime_factorization(n: int, primes: list[int]):
     vector = [0] * len(primes)
     vector_mod_2 = [0] * len(primes)
 
-    for j in range(len(primes)):
+    for i in range(len(primes)):
 
-        while n / primes[j] % 1 == 0:
+        while n / primes[i] % 1 == 0:
 
-            n = n // primes[j]
+            n = n // primes[i]
 
-            vector[j] += 1
-            vector_mod_2[j] = 1 if vector_mod_2[j] == 0 else 0
+            vector[i] += 1
+            vector_mod_2[i] = 1 if vector_mod_2[i] == 0 else 0
 
     if n != 1:
         return None
@@ -193,92 +209,12 @@ def prime_factorization(n: int, primes: list[int]):
     return (vector, vector_mod_2)
 
 
-vector_addition_info = tuple[list[int], list[int]]  # Creation type used in the function zero_vector_is_found
-
-# Function for step 3:
-def get_combination_for_zero_vector(vector_matrix_mod_2: list[list[int]], K: int) -> list[int] | None:
-
-    # The type vector_addition_info is a tuple composed of the indexes of the vectors that were added,
-    # and the result of the additions.
-
-    vector_infos: list[vector_addition_info] = [([i], vector_matrix_mod_2[i]) for i in range(len(vector_matrix_mod_2))]
-
-    for i in range(K):
-
-        vector_info_to_add: vector_addition_info = ()
-
-        # finding a vector where vector[i] == 1 :
-
-        j = 0
-
-        while j < len(vector_infos):
-            if vector_infos[j][1][i] == 1:
-                vector_info_to_add = vector_infos.pop(j)
-                break
-
-            j += 1
-
-        if vector_info_to_add == ():
-            continue
-
-        for j in range(len(vector_infos)):
-
-            if vector_infos[j][1][i] == 0:
-                continue
-
-            append_to_list_without_duplicates(vector_infos[j][0], vector_info_to_add[0])
-
-            vector_addition = [0 if vector_infos[j][1][k] == vector_info_to_add[1][k] else 1 for k in range(len(vector_info_to_add[1]))]
-
-            vector_infos[j] = (vector_infos[j][0], vector_addition)
-
-    appended_list_of_indexes = []
-
-    for (indexes_of_added_vectors, added_vector) in vector_infos:
-
-        if all(value == 0 for value in added_vector):
-            append_to_list_without_duplicates(appended_list_of_indexes, indexes_of_added_vectors)
-
-    if len(appended_list_of_indexes) >= K + 1:
-        return appended_list_of_indexes
-
-    return None
-
-
-def append_to_list_without_duplicates(list_with_added_elements: list, list_to_add: list):
-    """
-    If the list has the same element two times, this element won't appear in the
-    list "list_with_added_elements".
-    """
-    
-    for i in list_to_add:
-        if i in list_with_added_elements:
-            list_with_added_elements.remove(i)
-        else:
-            list_with_added_elements.append(i)
-
-    # this other version of this function is somehow slower: its aim was to cancel
-    # the append method if it removes more element than it adds
-
-    # elements_to_add = []
-    # elements_to_remove = []
-
-    # for i in list_to_add:
-    #     if i in list_with_added_elements:
-    #         elements_to_remove.append(i)
-    #     else:
-    #         elements_to_add.append(i)
-
-    # if len(elements_to_add) >= len(elements_to_remove):
-    #     list_with_added_elements.extend(elements_to_add)
-    #     for i in elements_to_remove:
-    #         list_with_added157289988114337_elements.remove(i)
 
 result_zero_or_one = 0
 result_with_right_guess = 0
 result_with_wrong_guess = 0
 
-for i in range(157289988114337, 157289988114409, 2):
+for i in range(157289988114331, 157289988114459, 2):
     result = quadratic_sieve(i)
 
     print(f"result for {i}: {result}")
@@ -292,6 +228,8 @@ for i in range(157289988114337, 157289988114409, 2):
             result_with_wrong_guess += 1
     else:
         result_zero_or_one += 1
+
+    print()
 
 print()
 print("number of function results with :")

@@ -1,28 +1,23 @@
-use std::io;
+use std::env;
 
+mod quadratic_sieve;
 mod sieve_of_eratosthenes;
+mod section_2_3;
+mod get_zero_vector_combination;
 
 fn main() {
 
-    // Création d'un buffer pour lire l'entrée utilisateur
-    let mut input = String::new();
+    env::set_var("RUST_BACKTRACE", "1");
 
-    // Lecture de l'entrée utilisateur
-    io::stdin()
-        .read_line(&mut input)
-        .expect("IO error.");
+    let result = quadratic_sieve::quadratic_sieve(157289988114349);
 
-    // Tentative de conversion de l'entrée en usize
-    let n : usize = input.trim().parse::<usize>().expect("Come on write a positive number!");
-
-
-    sieve_of_eratosthenes::get_primes_up_to(n);
-    println!("Hello, world!");
-
-    let array: [i8; 9] = [0; 9];
-
-    let mut array2 = array.clone();
-
-    array2[1] = 1;
+    match result {
+        Ok(algo_results) => {
+            println!("nb_of_tested_numbers = {}", algo_results.nb_of_tested_numbers);
+            println!("nb_of_sieved_numbers = {}", algo_results.nb_of_sieved_numbers);
+            println!("nb_of_b_smooth_found = {}", algo_results.nb_of_b_smooth_found);
+        },
+        Err(error_message) => println!("{}", error_message) 
+    }
 }
 

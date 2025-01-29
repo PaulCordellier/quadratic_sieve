@@ -3,5 +3,14 @@
 version = 4
 
 [[package]]
+name = "bnum"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f781dba93de3a5ef6dc5b17c9958b208f6f3f021623b360fb605ea51ce443f10"
+
+[[package]]
 name = "quadratic_sieve"
 version = "0.1.0"
+dependencies = [
+ "bnum",
+]

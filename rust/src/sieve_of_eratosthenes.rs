@@ -1,16 +1,16 @@
-pub fn get_primes_up_to(n: usize) -> Vec<usize> {
+pub fn get_primes_up_to(n: usize) -> Vec<u32> {
+
     if n < 2 {
-        return vec![]; // No primes less than 2
+        panic!("In the function get_primes_up_to(n) n shouldn't be less than 2. n = {}", n);
     }
 
     // Create a boolean vector to track prime numbers
-    let mut is_prime = vec![true; n + 1];
-    is_prime[0] = false ; // 0 is not prime
+    let mut is_prime: Vec<bool>  = vec![true; n + 1];
+    is_prime[0] = false; // 0 is not prime
     is_prime[1] = false; // 1 is not prime
 
     // Sieve of Eratosthenes
-    let sqrt_n = (n as f64).sqrt() as usize;
-    for i in 2..=sqrt_n {
+    for i in 2..=n.isqrt() {
         if is_prime[i] {
             for j in (i * i..=n).step_by(i) {
                 is_prime[j] = false; // Mark multiples of i as non-prime
@@ -18,12 +18,10 @@ pub fn get_primes_up_to(n: usize) -> Vec<usize> {
         }
     }
 
-    // Collect all prime numbers into a vector
-    is_prime
-        .iter()
-        .enumerate()
-        .filter(|&(_, &prime)| prime)
-        .map(|(i, _)| i)
-        .collect()
+    is_prime.iter()
+            .enumerate()
+            .filter(|(_, is_prime)| **is_prime )
+            .map(|(index, _)| index as u32)
+            .collect()
 }
     
