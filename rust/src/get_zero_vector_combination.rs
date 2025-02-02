@@ -12,7 +12,7 @@ pub fn get_zero_vector_combination(vector_matrix_mod_2: &Vec<Vec<u32>>, K: usize
     let enumerated_vectors = vector_matrix_mod_2.iter().enumerate();
     // enumerated_vectors is an iterator of the vectors mod 2 with their indexes
         
-        let mut vector_infos: Vec<VectorInfo> = enumerated_vectors.map(|(index, vector_mod_2)| {
+    let mut vector_infos: Vec<VectorInfo> = enumerated_vectors.map(|(index, vector_mod_2)| {
         VectorInfo {
             indices_of_added_vectors: vec![index],
             addition_result: vector_mod_2.clone()
@@ -78,11 +78,19 @@ pub fn get_zero_vector_combination(vector_matrix_mod_2: &Vec<Vec<u32>>, K: usize
 
         // Keep only the file longest vectors in the list:
 
+        const MATRIX_MAX_SIZE: usize = 30;
+
+        if matrix_of_indexes_for_zero_vector.len() <= MATRIX_MAX_SIZE {
+            continue;
+        }
+
         matrix_of_indexes_for_zero_vector.sort_by(|vec1, vec2| vec2.len().cmp(&vec1.len()));
-        matrix_of_indexes_for_zero_vector.truncate(4);
+        matrix_of_indexes_for_zero_vector.truncate(MATRIX_MAX_SIZE);
     }
 
-    let longest_vector_of_indices = matrix_of_indexes_for_zero_vector.swap_remove(0);
+    let longest_vector_of_indices = matrix_of_indexes_for_zero_vector.into_iter()
+                                                .next()
+                                                .expect("matrix_of_indexes_for_zero_vector shouldn't be empty here.");
 
     if longest_vector_of_indices.len() >= K + 1 {
         return Some(longest_vector_of_indices);

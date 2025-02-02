@@ -1,7 +1,11 @@
-use bnum::{cast::As, types::U512};
+use num_bigint::BigUint;
 // Possible other packages for long numbers:
 // https://github.com/rust-num/num-bigint?tab=readme-ov-file#alternatives
 
+/// This is the algorithm 2.3.5, page 112 in the manual.
+/// Given positive odd integer m, and integer a, this algorithm
+/// returns the Jacobi symbol, which for m an odd prime is also
+/// the Legendre symbol.
 pub fn jacobi_symbol(mut a: u128, mut m: u128) -> i8 {
 
     if m % 2 == 0 {
@@ -32,6 +36,9 @@ pub fn jacobi_symbol(mut a: u128, mut m: u128) -> i8 {
     0
 }
 
+/// This algorithm is at the pdf page 114 in the manual.
+/// Given an odd prime p and an integer a with jacobi_symbol(a, p) = 1, 
+/// this algorithm returns a solution x to x^2 ≡ a (mod p).
 #[allow(non_snake_case)]
 pub fn algo_2_3_8(p: u128, a: u128) -> u32 {
 
@@ -41,25 +48,31 @@ pub fn algo_2_3_8(p: u128, a: u128) -> u32 {
         panic!("The jacobi symbol is equal to {}, a = {}, p = {}", jacobi_symbol(a, p), a, p);
     }
 
-    match p % 8 {
+    let biguint_1: &BigUint = &BigUint::from(1_u8);
+    let biguint_2: &BigUint = &BigUint::from(2_u8);
+    let biguint_3: &BigUint = &BigUint::from(3_u8);
+    let biguint_4: &BigUint = &BigUint::from(4_u8);
+    let biguint_8: &BigUint = &BigUint::from(8_u8);
+
+    let result: BigUint = match p % 8 {
         3 | 7 => {
-            let a: U512 = (a % p).as_();
-            let exponent: u32 = (p as u32 + 1) / 4;
-            let p: U512 = p.as_();
-            
-            return (a.pow(exponent) % p).as_::<u32>();
+            let a = BigUint::from(a % p);
+            let p = BigUint::from(p);
+            let exponent = (&p + biguint_1) / biguint_4;
+
+            a.modpow(&exponent, &p)
         },
         5 => {
-            let a: u128 = a % p;
-            let p_as_U512: U512 = p.as_();
-            let mut x: U512 = a.as_::<U512>().pow((p as u32 + 3) / 8) % p_as_U512;
-            let c: U512 = x.pow(2) % p_as_U512;
+            let a = BigUint::from(a % p);
+            let p = BigUint::from(p);
+            let mut x = a.modpow(&((&p + biguint_3) / biguint_8), &p);
+            let c = x.modpow(biguint_2, &p);
 
             if c != a.into() {
-                x = (x * (2.as_::<U512>().pow((p as u32 - 1) / 4))) % p_as_U512;
+                x = x * (biguint_2.modpow(&((&p - biguint_1) / biguint_4), &p));
             }
 
-            return x.as_::<u32>();
+            x % p
         }
         1 => {
             // Find a random integer d ∈ [2, p − 1] with jacobi_symbol(d, p) = -1:
@@ -88,30 +101,34 @@ pub fn algo_2_3_8(p: u128, a: u128) -> u32 {
                 panic!("Incorrect values for s and/or t");
             }
 
-            let a: u128 = a % p;
-            let d: u128 = d % p;
+            let p = BigUint::from(p);
+            let t = BigUint::from(t);
 
-            let A: u128 = a.pow(t) % p;
-            let D: u128 = d.pow(t) % p;
+            let a = BigUint::from(a) % &p;
+            let d = BigUint::from(d) % &p;
 
-            let mut m: u32 = 0;
+            let A = a.modpow(&t, &p);
+            let D = d.modpow(&t, &p);
 
-            let A_as_U512: U512 = A.as_::<U512>();
-            let D_as_U512: U512 = D.as_::<U512>();
-            let p_as_U512: U512 = p.as_::<U512>();
-            
+            let mut m = BigUint::from(0_u8);
+
             for i in 0..s {
                 
-                let exponent = 2_u32.pow(s - 1 - i);
+                let exponent = biguint_2.pow(s - 1 - i);
                 
-                // I am deeply sorry to anyone reading this.
-                if ((A_as_U512 * D_as_U512.pow(m) % p_as_U512).pow(exponent) % p_as_U512) % p_as_U512 == p_as_U512 - U512::ONE {
+                if ((&A * D.modpow(&m, &p)).modpow(&exponent, &p)) % &p == &p - biguint_1 {
                     m += 2_u32.pow(i);
                 }
             }
 
-            return (a.pow((t + 1) / 2) * D.pow(m / 2) % p) as u32;
+            a.modpow(&((t + biguint_1) / biguint_2), &p) * D.modpow(&(m / biguint_2), &p)
         }
         _ => panic!("The number p = {} should be even.", p)
-    }
+    };
+
+    biguint_to_u32(&result)
+}
+
+fn biguint_to_u32(biguint: &BigUint) -> u32 {
+    biguint.to_u32_digits()[0]
 }
