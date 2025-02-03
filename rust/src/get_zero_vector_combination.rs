@@ -20,7 +20,7 @@ pub fn get_zero_vector_combination(vector_matrix_mod_2: &Vec<Vec<u32>>, K: usize
     })
     .collect();
 
-    for i in 0..K {
+    for i in 0..K + 1 {
         
         let mut vector_info_to_add: Option<VectorInfo> = None;
 

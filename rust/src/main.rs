@@ -9,10 +9,10 @@ fn main() {
 
     const TEST_START_NUMBER: u128 = 10_u128.pow(20);
     const NUMBER_OF_TESTS: u128 = 100;
-    const SIEVE_ERROR_MARGIN: u32 = 15;
+    const SIEVE_ERROR_MARGIN: u32 = 20;
 
     let mut number_of_right_guess = 0;
-    let mut number_of_wrong_guess = 0;
+    let mut number_of_results_that_are_1 = 0;
     let mut number_of_error_cant_find_enough_b_smooth = 0;
     let mut number_of_tested_numbers = 0;
     let mut number_of_sieved_numbers = 0;
@@ -39,11 +39,14 @@ fn main() {
             }
         };
 
-        if algo_results.non_trivial_factor != 1 && n % algo_results.non_trivial_factor == 0 {
+        if algo_results.non_trivial_factor == 1 {
+            number_of_results_that_are_1 += 1;
+            continue;
+        }
+        if n % algo_results.non_trivial_factor == 0 {
             number_of_right_guess += 1;
         } else {
-            number_of_wrong_guess += 1;
-            continue;
+            panic!("There is a problem is the quadratic sieve algorithm: {} isn't a factor of {}", algo_results.non_trivial_factor, n)
         }
 
         number_of_tested_numbers += algo_results.nb_of_tested_numbers;
@@ -60,7 +63,7 @@ fn main() {
     println!();
 
     println!("right guess rate = {:.1}", number_of_right_guess as f32 / NUMBER_OF_TESTS as f32 * 100.0);
-    println!("wrong guess rate = {:.1}", number_of_wrong_guess as f32 / NUMBER_OF_TESTS as f32 * 100.0);
+    println!("rate of results that are 1 = {:.1}", number_of_results_that_are_1 as f32 / NUMBER_OF_TESTS as f32 * 100.0);
     println!("rate of errors (can't find enough B-smooth) = {:.1}", number_of_error_cant_find_enough_b_smooth as f32 / NUMBER_OF_TESTS as f32 * 100.0);
     println!("average number of trails to find zero vector = {:.1}", number_of_trails_to_find_zero_vector as f32 / NUMBER_OF_TESTS as f32 * 100.0);
     

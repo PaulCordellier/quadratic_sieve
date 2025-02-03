@@ -7,6 +7,7 @@ use crate::get_zero_vector_combination::get_zero_vector_combination;
 use crate::section_2_3;
 use crate::sieve_of_eratosthenes;
 
+/// This is the basic implementation fo the basic quadratic sieve, in the manual pdf page 276.
 #[allow(non_snake_case)]
 pub fn quadratic_sieve(n: u128, sieve_error_margin: u32) -> Result<QuadraticSieveAlogResults, &'static str> {
 
@@ -31,7 +32,6 @@ pub fn quadratic_sieve(n: u128, sieve_error_margin: u32) -> Result<QuadraticSiev
                                         }
                                     })
                                     .collect();
-
 
 
     // 2. Sieving
@@ -60,11 +60,12 @@ pub fn quadratic_sieve(n: u128, sieve_error_margin: u32) -> Result<QuadraticSiev
                                                                    .map(|&prime| prime.ilog2() + 1)
                                                                    .collect();
 
-    let mut start_of_number_range: usize = (n as f32).sqrt().ceil() as usize + 1;
+    let n_squared = n.isqrt() as usize + 1;
+    let mut start_of_number_range_coef: i64 = 0;
 
     const NUMBER_RANGE_SIZE: usize = 1000;
 
-    let mut number_of_trails: usize = 0;
+    let mut number_of_trials: usize = 0;
 
     let mut quadratic_sieve_alog_results = QuadraticSieveAlogResults {
         non_trivial_factor: 0,
@@ -74,13 +75,33 @@ pub fn quadratic_sieve(n: u128, sieve_error_margin: u32) -> Result<QuadraticSiev
         nb_of_trails_to_find_zero_vector: 0
     };
     
+    // In this loop, we sieve numbers until the program blocks because there is too much trials,
+    // or until a combination of vector that forms the zero vector is found. Those vectors are described
+    // step 3. 
     'while_zero_vector_combination_is_not_found: loop {
     
-        number_of_trails += 1;
+        number_of_trials += 1;
+
+        // The following part of the program ensure that the program sives through upper and lower nomber from √n.
+        // The start of the number range can't be negative but x 
+        
+        let start_of_number_range: usize = (n_squared as i64 + start_of_number_range_coef * NUMBER_RANGE_SIZE as i64) as usize;
+
+        if start_of_number_range_coef == 0 {
+            start_of_number_range_coef = 1;
+        } else if start_of_number_range_coef > 0 {
+            start_of_number_range_coef += 1;
+
+            if (n_squared as i64 - start_of_number_range_coef * NUMBER_RANGE_SIZE as i64) > 0 {
+                start_of_number_range_coef = -start_of_number_range_coef;
+            }
+        } else {
+            start_of_number_range_coef = -start_of_number_range_coef;
+        }
 
         let mut sum_of_logarithms: [u32; NUMBER_RANGE_SIZE] = [0; NUMBER_RANGE_SIZE];
 
-        // For each prime:
+        // This loop add integers in the array sum_of_logarithms
         for i in 0..primes_for_sieving.len() {
 
             let prime = primes_for_sieving[i];
@@ -113,10 +134,17 @@ pub fn quadratic_sieve(n: u128, sieve_error_margin: u32) -> Result<QuadraticSiev
             }
         }
 
-        let mut threshold_to_recognize_b_smooth = ((start_of_number_range as u128).pow(2) - n).ilog2();
-        threshold_to_recognize_b_smooth -= sieve_error_margin;
+        let x2 = (start_of_number_range as u128 + NUMBER_RANGE_SIZE as u128 / 2).pow(2);
+
+        let threshold_to_recognize_b_smooth;
+
+        if x2 >= n {
+            threshold_to_recognize_b_smooth = (x2 - n).ilog2() - sieve_error_margin;
+        } else {
+            threshold_to_recognize_b_smooth = (n - x2).ilog2() - sieve_error_margin;
+        }
     
-        // For each number in the number range:
+        // This loop sieves and stops the parent loop if the combination for a zero vector is found.
         for i in 0..NUMBER_RANGE_SIZE {
 
             if sum_of_logarithms[i] < threshold_to_recognize_b_smooth {
@@ -132,10 +160,21 @@ pub fn quadratic_sieve(n: u128, sieve_error_margin: u32) -> Result<QuadraticSiev
             // x isn't B-smooth. If it is, the vector of exponents of primes factors of x
             // is returned in vector. (The same vector (mod 2) is put in vector_mod_2).
 
-            let x2_n = x.pow(2) - n;     // x2_n = x² − n
+            let x2 =  x.pow(2);     // x2 = x²
+            let x2_n;   // x2_n = x² − n
 
-            let vector: Vec<u32>;
-            let vector_mod_2: Vec<u32>;
+            let x_is_negative: bool;
+
+            if x2 >= n {
+                x2_n = x.pow(2) - n;     
+                x_is_negative = false;
+            } else {
+                x2_n = n - x.pow(2);
+                x_is_negative = true;
+            }
+
+            let mut vector: Vec<u32>;
+            let mut vector_mod_2: Vec<u32>;
 
             match prime_factorization(x2_n, &primes) {
                 Some(x) => {
@@ -146,11 +185,17 @@ pub fn quadratic_sieve(n: u128, sieve_error_margin: u32) -> Result<QuadraticSiev
 
             quadratic_sieve_alog_results.nb_of_b_smooth_found += 1;
 
+            // At the end of the vector, we add an indicator that the array is positive or negative
+            let sign_indicator = if x_is_negative { 1 } else { 0 };
+
+            vector.push(sign_indicator);
+            vector_mod_2.push(sign_indicator);
+
             S.push((x, x2_n));
             vector_matrix.push(vector);
             vector_matrix_mod_2.push(vector_mod_2);
 
-            if S.len() < K + 10 {
+            if S.len() < K + 15 {
                 continue;
             }
 
@@ -168,9 +213,6 @@ pub fn quadratic_sieve(n: u128, sieve_error_margin: u32) -> Result<QuadraticSiev
 
             // Here, if we add all of the vectors represented by the vector indexes mod 2,
             // the result is the zero vector (the zero vector needs to be obtained in step 3)
-            
-            assert_eq!(S.len(), vector_matrix.len());
-            assert_eq!(S.len(), vector_matrix_mod_2.len());
 
             for i in (0..S.len()).rev() {
                 if !vector_indexes.contains(&i) {
@@ -180,15 +222,13 @@ pub fn quadratic_sieve(n: u128, sieve_error_margin: u32) -> Result<QuadraticSiev
                 }
             }
 
-            quadratic_sieve_alog_results.nb_of_tested_numbers = (number_of_trails * NUMBER_RANGE_SIZE) as u64;
+            quadratic_sieve_alog_results.nb_of_tested_numbers = (number_of_trials * NUMBER_RANGE_SIZE) as u64;
 
             break 'while_zero_vector_combination_is_not_found;
             // This break statement exits the two loops we are currently in
         }
 
-        start_of_number_range += NUMBER_RANGE_SIZE;
-
-        if number_of_trails >= 5000 {
+        if number_of_trials >= 5000 {
             return Err("The algorithm didn't find enough B-smooth values");
         }
     }
