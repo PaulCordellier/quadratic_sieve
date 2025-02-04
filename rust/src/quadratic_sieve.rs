@@ -1,4 +1,3 @@
-use std::usize;
 use std::vec;
 use num_integer::Integer;
 use num_bigint::BigUint;
@@ -63,7 +62,7 @@ pub fn quadratic_sieve(n: u128, sieve_error_margin: u32) -> Result<QuadraticSiev
     let n_squared = n.isqrt() as usize + 1;
     let mut start_of_number_range_coef: i64 = 0;
 
-    const NUMBER_RANGE_SIZE: usize = 1000;
+    const NUMBER_RANGE_SIZE: usize = 10000;
 
     let mut number_of_trials: usize = 0;
 
@@ -136,13 +135,17 @@ pub fn quadratic_sieve(n: u128, sieve_error_margin: u32) -> Result<QuadraticSiev
 
         let x2 = (start_of_number_range as u128 + NUMBER_RANGE_SIZE as u128 / 2).pow(2);
 
-        let threshold_to_recognize_b_smooth;
-
-        if x2 >= n {
-            threshold_to_recognize_b_smooth = (x2 - n).ilog2() - sieve_error_margin;
+        let threshold_to_recognize_b_smooth = if x2 >= n {
+            (x2 - n).ilog2()
         } else {
-            threshold_to_recognize_b_smooth = (n - x2).ilog2() - sieve_error_margin;
-        }
+            (n - x2).ilog2()
+        };
+
+        let threshold_to_recognize_b_smooth = if threshold_to_recognize_b_smooth >= sieve_error_margin {
+            threshold_to_recognize_b_smooth - sieve_error_margin
+        } else {
+            panic!("The error margin is too big");
+        };
     
         // This loop sieves and stops the parent loop if the combination for a zero vector is found.
         for i in 0..NUMBER_RANGE_SIZE {
@@ -195,7 +198,7 @@ pub fn quadratic_sieve(n: u128, sieve_error_margin: u32) -> Result<QuadraticSiev
             vector_matrix.push(vector);
             vector_matrix_mod_2.push(vector_mod_2);
 
-            if S.len() < K + 15 {
+            if S.len() < K + n.ilog2() as usize {
                 continue;
             }
 
@@ -228,7 +231,7 @@ pub fn quadratic_sieve(n: u128, sieve_error_margin: u32) -> Result<QuadraticSiev
             // This break statement exits the two loops we are currently in
         }
 
-        if number_of_trials >= 5000 {
+        if number_of_trials >= 1000 {
             return Err("The algorithm didn't find enough B-smooth values");
         }
     }

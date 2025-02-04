@@ -115,13 +115,13 @@ fn append_index_vecs_without_duplicates(vec_with_added_elements: &mut Vec<usize>
 
 fn vector_addition_mod_2(vec_with_added_elements: &mut Vec<u32>, vec_to_add: &Vec<u32>) {
 
-    let vector_len = vec_with_added_elements.len();
+    assert_eq!(
+        vec_with_added_elements.len(),
+        vec_to_add.len(),
+        "vector_addition_mod_2: The length of the two vectors should be the same to make the vector addition possible."
+    );
     
-    if vector_len != vec_to_add.len() {
-        panic!("The length of the two vectors should be the same to make the vector addition possible.")
-    }
-
-    for i in 0..vector_len {
+    for i in 0..vec_to_add.len() {
         vec_with_added_elements[i] = if vec_with_added_elements[i] == vec_to_add[i] { 0 } else { 1 };
     }
 }
