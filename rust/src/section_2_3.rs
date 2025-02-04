@@ -130,5 +130,11 @@ pub fn algo_2_3_8(p: u128, a: u128) -> u32 {
 }
 
 fn biguint_to_u32(biguint: &BigUint) -> u32 {
+    let u32_digits = biguint.to_u32_digits();
+
+    if u32_digits.len() == 0 {
+        return 0;
+    }
+
     biguint.to_u32_digits()[0]
 }
