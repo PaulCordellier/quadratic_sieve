@@ -8,7 +8,7 @@ use crate::sieve_of_eratosthenes;
 
 /// This is the basic implementation fo the basic quadratic sieve, in the manual pdf page 276.
 #[allow(non_snake_case)]
-pub fn quadratic_sieve(n: u128, sieve_error_margin: u32) -> Result<QuadraticSieveAlogResults, &'static str> {
+pub fn quadratic_sieve(n: u128, sieve_margin_of_error: u32, minimum_logarithm_for_sieving: u32) -> Result<QuadraticSieveAlogResults, &'static str> {
 
     // 1. Initialisation
 
@@ -41,15 +41,13 @@ pub fn quadratic_sieve(n: u128, sieve_error_margin: u32) -> Result<QuadraticSiev
 
     let mut primes_for_sieving: Vec<usize> = primes.clone();
 
-    const MINIMUM_LOGARITHM: u32 = 4;
-
     for i in 0..K {
 
-        if primes_for_sieving[i].ilog2() + 1 > MINIMUM_LOGARITHM {
+        if primes_for_sieving[i].ilog2() + 1 > minimum_logarithm_for_sieving {
             break;
         }
 
-        while primes_for_sieving[i].ilog2() + 1 <= MINIMUM_LOGARITHM {
+        while primes_for_sieving[i].ilog2() + 1 <= minimum_logarithm_for_sieving {
             primes_for_sieving[i] *= primes[i];
         }
     }
@@ -63,12 +61,12 @@ pub fn quadratic_sieve(n: u128, sieve_error_margin: u32) -> Result<QuadraticSiev
     let mut start_of_number_range_coef: i64 = 0;
 
     const NUMBER_RANGE_SIZE: usize = 10000;
-
+    
     let mut number_of_trials: usize = 0;
+    const MAX_NUMBER_OF_TRAILS: usize = 5000;
 
     let mut quadratic_sieve_alog_results = QuadraticSieveAlogResults {
         non_trivial_factor: 0,
-        nb_of_tested_numbers: 0,
         nb_of_sieved_numbers: 0,
         nb_of_b_smooth_found: 0,
         nb_of_trails_to_find_zero_vector: 0
@@ -141,8 +139,8 @@ pub fn quadratic_sieve(n: u128, sieve_error_margin: u32) -> Result<QuadraticSiev
             (n - x2).ilog2()
         };
 
-        let threshold_to_recognize_b_smooth = if threshold_to_recognize_b_smooth >= sieve_error_margin {
-            threshold_to_recognize_b_smooth - sieve_error_margin
+        let threshold_to_recognize_b_smooth = if threshold_to_recognize_b_smooth >= sieve_margin_of_error {
+            threshold_to_recognize_b_smooth - sieve_margin_of_error
         } else {
             panic!("The error margin is too big");
         };
@@ -225,13 +223,11 @@ pub fn quadratic_sieve(n: u128, sieve_error_margin: u32) -> Result<QuadraticSiev
                 }
             }
 
-            quadratic_sieve_alog_results.nb_of_tested_numbers = (number_of_trials * NUMBER_RANGE_SIZE) as u64;
-
             break 'while_zero_vector_combination_is_not_found;
             // This break statement exits the two loops we are currently in
         }
 
-        if number_of_trials >= 1000 {
+        if number_of_trials >= MAX_NUMBER_OF_TRAILS {
             return Err("The algorithm didn't find enough B-smooth values");
         }
     }
@@ -284,7 +280,6 @@ pub fn quadratic_sieve(n: u128, sieve_error_margin: u32) -> Result<QuadraticSiev
 
 pub struct QuadraticSieveAlogResults {
     pub non_trivial_factor: u128,
-    pub nb_of_tested_numbers: u64,
     pub nb_of_sieved_numbers: u64,
     pub nb_of_b_smooth_found: u64,
     pub nb_of_trails_to_find_zero_vector: u64

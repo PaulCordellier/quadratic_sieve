@@ -1,9 +1,11 @@
 use std::vec;
 
+/// The goal is to find a combination for a zero vector form a matrix of vectors mod 2. Returns a
+/// vector of indexes, or nothing. When the vector of indexes is returned, the indexes represent
+/// the vectors that, added, will result in a zero vector.
 #[allow(non_snake_case)]
 pub fn get_zero_vector_combination(vector_matrix_mod_2: &Vec<Vec<u32>>, K: usize) -> Option<Vec<usize>> {
 
-    #[derive(Debug)]
     struct VectorInfo {
         indices_of_added_vectors: Vec<usize>,
         addition_result: Vec<u32>
@@ -19,6 +21,8 @@ pub fn get_zero_vector_combination(vector_matrix_mod_2: &Vec<Vec<u32>>, K: usize
         }
     })
     .collect();
+
+    // Here we perform the gaussian elimination:
 
     for i in 0..K + 1 {
         
@@ -56,14 +60,13 @@ pub fn get_zero_vector_combination(vector_matrix_mod_2: &Vec<Vec<u32>>, K: usize
         }
     }
 
+    // At this point, every addition result is zero vector.
+    // We need here to find the longest combination of indexes that added result in the zero vector
+
     let mut matrix_of_indexes_for_zero_vector: Vec<Vec<usize>> = vec![vec![]];
 
     for vector_info in vector_infos {
         
-        if vector_info.addition_result.iter().any(|&x| x != 0) {
-            continue;
-        }
-
         for i in 0..matrix_of_indexes_for_zero_vector.len() {
             
             let mut vector_of_indexes = matrix_of_indexes_for_zero_vector[i].clone();

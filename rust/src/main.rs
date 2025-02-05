@@ -7,14 +7,13 @@ mod get_zero_vector_combination;
 
 fn main() {
 
-    const TEST_START_NUMBER: u128 = 10_u128.pow(20);
+    const TEST_START_NUMBER: u128 = 10_u128.pow(20) + 1;
     const NUMBER_OF_TESTS: u128 = 100;
-    const SIEVE_ERROR_MARGIN: u32 = 20;
+    const SIEVE_MARGIN_OF_ERROR: u32 = 20;
 
     let mut number_of_right_guess = 0;
     let mut number_of_results_that_are_1 = 0;
     let mut number_of_error_cant_find_enough_b_smooth = 0;
-    let mut number_of_tested_numbers = 0;
     let mut number_of_sieved_numbers = 0;
     let mut number_of_actual_b_smooth_numbers = 0;
     let mut number_of_trails_to_find_zero_vector = 0;
@@ -25,7 +24,11 @@ fn main() {
 
         let time_before_quadratic_sieve = SystemTime::now();
 
-        let result = quadratic_sieve::quadratic_sieve(n, SIEVE_ERROR_MARGIN);
+        let result = quadratic_sieve::quadratic_sieve(
+            n, 
+            SIEVE_MARGIN_OF_ERROR, 
+            4
+        );
 
         let elapsed_time = time_before_quadratic_sieve.elapsed().expect("System time error");
 
@@ -49,7 +52,6 @@ fn main() {
             panic!("There is a problem is the quadratic sieve algorithm: {} isn't a factor of {}", algo_results.non_trivial_factor, n)
         }
 
-        number_of_tested_numbers += algo_results.nb_of_tested_numbers;
         number_of_sieved_numbers += algo_results.nb_of_sieved_numbers;
         number_of_actual_b_smooth_numbers += algo_results.nb_of_b_smooth_found;
         number_of_trails_to_find_zero_vector += algo_results.nb_of_trails_to_find_zero_vector;
@@ -58,7 +60,7 @@ fn main() {
     average_time_of_function /= NUMBER_OF_TESTS as u32;
 
     println!("number of tests = {}", NUMBER_OF_TESTS);
-    println!("sieve error margin = {}", SIEVE_ERROR_MARGIN);
+    println!("sieve margin of error = {}", SIEVE_MARGIN_OF_ERROR);
 
     println!();
 
@@ -69,7 +71,6 @@ fn main() {
     
     println!();
 
-    println!("rate of b-smooth numbers found out of all tested numbers = {:.3}", number_of_actual_b_smooth_numbers as f32 / number_of_tested_numbers as f32 * 100.0);
     println!("rate of b-smooth numbers found out of sieved numbers = {:.3}", number_of_actual_b_smooth_numbers as f32 / number_of_sieved_numbers as f32 * 100.0);
     
     println!();

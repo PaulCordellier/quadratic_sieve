@@ -48,11 +48,11 @@ pub fn algo_2_3_8(p: u128, a: u128) -> u32 {
         panic!("The jacobi symbol is equal to {}, a = {}, p = {}", jacobi_symbol(a, p), a, p);
     }
 
-    let biguint_1: &BigUint = &BigUint::from(1_u8);
-    let biguint_2: &BigUint = &BigUint::from(2_u8);
-    let biguint_3: &BigUint = &BigUint::from(3_u8);
-    let biguint_4: &BigUint = &BigUint::from(4_u8);
-    let biguint_8: &BigUint = &BigUint::from(8_u8);
+    let biguint_1 = &BigUint::from(1_u8);
+    let biguint_2 = &BigUint::from(2_u8);
+    let biguint_3 = &BigUint::from(3_u8);
+    let biguint_4 = &BigUint::from(4_u8);
+    let biguint_8 = &BigUint::from(8_u8);
 
     let result: BigUint = match p % 8 {
         3 | 7 => {
