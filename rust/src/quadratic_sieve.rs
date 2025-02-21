@@ -61,9 +61,9 @@ pub fn quadratic_sieve(n: u128, sieve_margin_of_error: u32, minimum_logarithm_fo
     let mut start_of_number_range_coef: i64 = 0;
 
     const NUMBER_RANGE_SIZE: usize = 10000;
-    
+
     let mut number_of_trials: usize = 0;
-    const MAX_NUMBER_OF_TRAILS: usize = 5000;
+    const MAX_NUMBER_OF_TRAILS: usize = 10000;
 
     let mut quadratic_sieve_alog_results = QuadraticSieveAlogResults {
         non_trivial_factor: 0,

@@ -1,4 +1,4 @@
-use std::time::{Duration, SystemTime};
+use std::{fs::File, io::Write, time::{Duration, Instant}};
 
 mod quadratic_sieve;
 mod sieve_of_eratosthenes;
@@ -7,74 +7,101 @@ mod get_zero_vector_combination;
 
 fn main() {
 
-    const TEST_START_NUMBER: u128 = 10_u128.pow(20) + 1;
-    const NUMBER_OF_TESTS: u128 = 100;
-    const SIEVE_MARGIN_OF_ERROR: u32 = 20;
+    let content = "exponent of n;\
+            computation time;\
+            rate of successful results;\
+            average number of trails to find zero vector;\
+            rate of sieved numbers that are B-smooth";
 
-    let mut number_of_right_guess = 0;
-    let mut number_of_results_that_are_1 = 0;
-    let mut number_of_error_cant_find_enough_b_smooth = 0;
-    let mut number_of_sieved_numbers = 0;
-    let mut number_of_actual_b_smooth_numbers = 0;
-    let mut number_of_trails_to_find_zero_vector = 0;
+    let mut file = File::create("data.csv").expect("Can not create or override data.csv");
+    
+    file.write_all(content.as_bytes()).expect("Can not write on the file");
 
-    let mut average_time_of_function = Duration::new(0, 0);
+    for i in 8..29 {
 
-    for n in (TEST_START_NUMBER .. TEST_START_NUMBER + NUMBER_OF_TESTS * 2).step_by(2) {
+        println!("testing for exponent {}", i);
 
-        let time_before_quadratic_sieve = SystemTime::now();
+        let benckmark_results = benckmark_quadratic_sieve(i);
 
-        let result = quadratic_sieve::quadratic_sieve(
-            n, 
-            SIEVE_MARGIN_OF_ERROR, 
-            4
+        let csv_line: String = format!(
+            "\n{};{:.3};{:.4};{};{:.4}",
+            i,
+            benckmark_results.average_computation_time.as_secs_f64() * 100.0,
+            benckmark_results.rate_of_successful_results,
+            benckmark_results.average_number_of_trails_to_find_zero_vector,
+            if benckmark_results.rate_of_sieved_numbers_that_are_b_smooth.is_nan() { 
+                0.0 
+            } else {
+                benckmark_results.rate_of_sieved_numbers_that_are_b_smooth 
+            }
         );
 
-        let elapsed_time = time_before_quadratic_sieve.elapsed().expect("System time error");
+        file.write(csv_line.as_bytes()).expect("Can not write on the file");
+    }
+}
 
-        average_time_of_function += elapsed_time;
+struct BenckmarkResults {
+    average_computation_time: Duration,
+    rate_of_successful_results: f32,
+    average_number_of_trails_to_find_zero_vector: u64,
+    rate_of_sieved_numbers_that_are_b_smooth: f32
+}
 
-        let algo_results = match result {
+fn benckmark_quadratic_sieve(exponent_of_n: u32) -> BenckmarkResults {
+
+    let mut benckmark_results = BenckmarkResults {
+        average_computation_time: Duration::new(0, 0),
+        rate_of_successful_results: 0.0,
+        average_number_of_trails_to_find_zero_vector: 0,
+        rate_of_sieved_numbers_that_are_b_smooth: 0.0
+    };
+
+    let test_start_number: u128 = 10_u128.pow(exponent_of_n) + 1;
+    const NUMBER_OF_TESTS: u128 = 50;
+    const SIEVE_MARGIN_OF_ERROR: u32 = 20;
+
+    let mut number_of_actual_b_smooth_numbers = 0;
+    let mut number_of_sieved_numbers = 0;
+
+    for n in (test_start_number .. test_start_number + NUMBER_OF_TESTS * 2).step_by(2) {
+
+        let time_before_quadratic_sieve = Instant::now();
+
+        let algo_results = quadratic_sieve::quadratic_sieve(
+            n, 
+            SIEVE_MARGIN_OF_ERROR, 
+            3
+        );
+
+        let elapsed_time = time_before_quadratic_sieve.elapsed();
+
+        let algo_results = match algo_results {
             Ok(algo_results) => algo_results,
             Err(_error_message) => {
-                number_of_error_cant_find_enough_b_smooth += 1;
                 continue;
             }
         };
 
         if algo_results.non_trivial_factor == 1 {
-            number_of_results_that_are_1 += 1;
             continue;
         }
-        if n % algo_results.non_trivial_factor == 0 {
-            number_of_right_guess += 1;
-        } else {
-            panic!("There is a problem is the quadratic sieve algorithm: {} isn't a factor of {}", algo_results.non_trivial_factor, n)
+        if n % algo_results.non_trivial_factor != 0 {
+            panic!("There is a problem in the quadratic sieve algorithm: {} isn't a factor of {}", algo_results.non_trivial_factor, n);
         }
+        
+        benckmark_results.average_computation_time += elapsed_time;
 
-        number_of_sieved_numbers += algo_results.nb_of_sieved_numbers;
+        benckmark_results.rate_of_successful_results += 1.0;
+
         number_of_actual_b_smooth_numbers += algo_results.nb_of_b_smooth_found;
-        number_of_trails_to_find_zero_vector += algo_results.nb_of_trails_to_find_zero_vector;
+        number_of_sieved_numbers += algo_results.nb_of_sieved_numbers;
+        benckmark_results.average_number_of_trails_to_find_zero_vector += algo_results.nb_of_trails_to_find_zero_vector;
     }
 
-    average_time_of_function /= NUMBER_OF_TESTS as u32;
+    benckmark_results.average_computation_time /= NUMBER_OF_TESTS as u32;
+    benckmark_results.average_number_of_trails_to_find_zero_vector /= NUMBER_OF_TESTS as u64;
+    benckmark_results.rate_of_sieved_numbers_that_are_b_smooth = number_of_actual_b_smooth_numbers as f32 / number_of_sieved_numbers as f32;
 
-    println!("number of tests = {}", NUMBER_OF_TESTS);
-    println!("sieve margin of error = {}", SIEVE_MARGIN_OF_ERROR);
-
-    println!();
-
-    println!("right guess rate = {:.1}", number_of_right_guess as f32 / NUMBER_OF_TESTS as f32 * 100.0);
-    println!("rate of results that are 1 = {:.1}", number_of_results_that_are_1 as f32 / NUMBER_OF_TESTS as f32 * 100.0);
-    println!("rate of errors (can't find enough B-smooth) = {:.1}", number_of_error_cant_find_enough_b_smooth as f32 / NUMBER_OF_TESTS as f32 * 100.0);
-    println!("average number of trails to find zero vector = {:.1}", number_of_trails_to_find_zero_vector as f32 / NUMBER_OF_TESTS as f32 * 100.0);
-    
-    println!();
-
-    println!("rate of b-smooth numbers found out of sieved numbers = {:.3}", number_of_actual_b_smooth_numbers as f32 / number_of_sieved_numbers as f32 * 100.0);
-    
-    println!();
-
-    println!("average computation time = {:#?}", average_time_of_function)
+    benckmark_results
 }
 
